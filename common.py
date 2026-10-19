@@ -19,11 +19,11 @@ RESULTS = REPO / "results"
 BASE = "openai/whisper-small"
 SR = 16_000
 
-ZW = re.compile("[‌‍]")  # zero-width non-joiner / joiner
+ZW = re.compile("[\u200c\u200d]")  # zero-width non-joiner / joiner
 
 
 def clean_text(s: str) -> str:
-    s = unicodedata.normalize("NFC", s)
+    s = unicodedata.normalize("NFC", s.replace("\\n", " "))  # OpenSLR 66 has literal "\n"
     s = ZW.sub("", s)
     return re.sub(r"\s+", " ", s).strip()
 

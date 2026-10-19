@@ -7,10 +7,12 @@ Test:  FLEURS te_in test (headline) and Kathbath valid (second benchmark; Kathba
 """
 import argparse
 import csv
+import io
 import random
 import sys
 from pathlib import Path
 
+import soundfile as sf
 from datasets import Audio, Dataset, concatenate_datasets, load_dataset
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -61,7 +63,12 @@ def load_kathbath(shards):
 
 
 def add_duration(ds):
-    return ds.map(lambda b: {"duration": len(b["audio"]["array"]) / SR}, num_proc=2)
+    """Read durations from file headers, without decoding or resampling the audio."""
+    def dur(audio):
+        return {"duration": [sf.info(io.BytesIO(a["bytes"]) if a["bytes"] else a["path"]).duration
+                             for a in audio]}
+    raw = ds.cast_column("audio", Audio(decode=False))
+    return raw.map(dur, input_columns="audio", batched=True).cast_column("audio", Audio(sampling_rate=SR))
 
 
 def keep(b):

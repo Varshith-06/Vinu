@@ -1,0 +1,6 @@
+split,source,clips,hours,speakers
+train,fleurs,2498,8.37,1
+train,slr66,4258,5.46,47
+val,fleurs,110,0.39,1
+val,slr66,190,0.25,42
+test_fleurs,fleurs,471,1.44,1
