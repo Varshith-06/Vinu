@@ -10,7 +10,9 @@ def pct(x):
 
 def wer_table(norm="norm_te"):
     df = pd.read_csv(RESULTS / "wer.csv")
-    df = df[df.normaliser == norm].drop_duplicates(["model", "split"], keep="last")
+    df = df[(df.normaliser == norm) & df.split.str.startswith("test_")]  # val rows only pick checkpoints
+    df = df.drop_duplicates(["model", "split"], keep="last")
+    df = df.sort_values("model", key=lambda s: s.where(s != "zeroshot", ""), kind="stable")
     rows = []
     for model, g in df.groupby("model", sort=False):
         cells = [model]
@@ -24,6 +26,13 @@ def wer_table(norm="norm_te"):
         rows.append(cells)
     head = ["Model", "FLEURS-te WER (95% CI)", "FLEURS-te CER", "Kathbath-te WER (95% CI)", "Kathbath-te CER"]
     return md(head, rows)
+
+
+def selection_table():
+    df = pd.read_csv(RESULTS / "checkpoint_selection.csv")
+    rows = [[r.model, f"{pct(r.wer)} ({pct(r.wer_lo)}–{pct(r.wer_hi)})", pct(r.cer),
+             "selected" if r.selected else ""] for r in df.itertuples()]
+    return md(["Checkpoint", "val WER (95% CI)", "val CER", ""], rows)
 
 
 def bench_table():
@@ -45,5 +54,7 @@ def md(head, rows):
 if __name__ == "__main__":
     print("### WER (norm_te)\n\n" + wer_table() + "\n")
     print("### WER (Whisper BasicTextNormalizer)\n\n" + wer_table("whisper_basic") + "\n")
+    if (RESULTS / "checkpoint_selection.csv").exists():
+        print("### Checkpoint selection (val)\n\n" + selection_table() + "\n")
     if (RESULTS / "bench.csv").exists():
         print("### Deployment\n\n" + bench_table())
