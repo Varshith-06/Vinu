@@ -21,9 +21,12 @@ model = PeftModel.from_pretrained(base, args.adapter).merge_and_unload()
 model.generation_config.language, model.generation_config.task = "te", "transcribe"
 model.save_pretrained(merged)
 WhisperProcessor.from_pretrained(BASE, language="te", task="transcribe").save_pretrained(merged)
-# the vocabulary is unchanged, so take tokenizer.json from the base repo if it is missing
-if not (merged / "tokenizer.json").exists():
-    shutil.copy(hf_hub_download(BASE, "tokenizer.json"), merged / "tokenizer.json")
+# the vocabulary and feature extractor are unchanged, so take any file CTranslate2 needs from
+# the base repo if save_pretrained did not write it (Transformers 5 folds preprocessor_config.json
+# into processor_config.json)
+for name in ("tokenizer.json", "preprocessor_config.json"):
+    if not (merged / name).exists():
+        shutil.copy(hf_hub_download(BASE, name), merged / name)
 
 for q in args.quant.split(","):
     out = EXPORT / f"ct2-{q}"
