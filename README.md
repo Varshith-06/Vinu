@@ -6,7 +6,7 @@ Every number below comes from a CSV in `results/`; the tables are printed by `ma
 
 ## Results
 
-LoRA on 5.1% of the parameters takes whisper-small from unusable to **32.4% WER on FLEURS Telugu** (95% CI 30.7–34.3%) and **32.7% on Kathbath** (31.8–33.5%), with CER of 9.8% and 6.5%.
+LoRA on 5.1% of the parameters takes whisper-small from unusable to **32.4% WER on FLEURS Telugu** (95% CI 30.7–34.3%) and **32.7% on Kathbath** (31.8–33.5%), with CER of 9.8% and 6.5%. Converted to CTranslate2, it runs 2.2× faster than Transformers on the GPU, and the INT8 build runs at 3.9× real time on a laptop CPU in 308 MB with no measurable loss in accuracy.
 
 ### WER and CER, Telugu-safe normaliser (`norm_te`)
 
@@ -47,7 +47,28 @@ The checkpoint was chosen on `val` only (`results/checkpoint_selection.csv`); th
 - **Numbers and Latin script.** FLEURS references write digits and Latin abbreviations ("2", "km", "000"), while the model writes them out in Telugu (రెండు, మీ, వేల). 64% of number tokens and 92% of Latin-script tokens are wrong, against 28% of Telugu words. Kathbath has neither.
 - **Clip length.** On FLEURS, WER is flat at 28–33% up to 20 s and rises to 43% on the 8 clips over 20 s, driven by deletions (19%): long clips get cut short.
 
-<!-- deployment -->
+### Deployment: accuracy vs speed (FLEURS-te test, 471 clips)
+
+The selected adapter is merged into whisper-small and converted to CTranslate2 at three precisions, then run with faster-whisper one clip at a time (batch 1, one warm-up clip, latency per clip).
+
+| Configuration | Device | Beam | WER (95% CI) | p50 / p95 latency (ms) | RTFx | Peak memory | Size on disk |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| hf-fp16-gpu | RTX 4060 Laptop | 1 | 32.5% (30.7%–34.5%) | 1911 / 3406 | 5.4 | 710 MB | 461 MB |
+| ct2-float16-gpu | RTX 4060 Laptop | 1 | 32.0% (30.3%–33.7%) | 886 / 1479 | 11.8 | 854 MB | 461 MB |
+| ct2-int8_float16-gpu | RTX 4060 Laptop | 1 | 31.9% (30.2%–33.7%) | 1042 / 1862 | 9.9 | 583 MB | 233 MB |
+| ct2-int8_float16-gpu-beam5 | RTX 4060 Laptop | 5 | 31.3% (29.6%–33.0%) | 1321 / 2333 | 7.9 | 662 MB | 233 MB |
+| ct2-int8-cpu | cpu | 1 | 31.9% (30.2%–33.6%) | 2666 / 4346 | 3.9 | 308 MB | 233 MB |
+| ct2-int8-cpu-beam5 | cpu | 5 | 31.4% (29.7%–33.0%) | 4007 / 7397 | 2.5 | 469 MB | 233 MB |
+
+![WER vs RTFx](results/wer_vs_rtfx.png)
+
+- **CTranslate2 is 2.2× faster than Transformers at no accuracy cost**: 11.8× vs 5.4× real time on the GPU, with median latency down from 1.9 s to 0.9 s per clip, and WER within the confidence interval (32.0% vs 32.5%).
+- **INT8 costs nothing measurable.** int8_float16 scores 31.9% against 32.0% for float16, at half the size on disk (233 MB vs 461 MB) and 32% less peak GPU memory (583 MB vs 854 MB). On this GPU it is slightly slower than float16 (9.9× vs 11.8×).
+- **A laptop CPU is enough.** INT8 on 8 threads of a Ryzen 7 7840HS runs at 3.9× real time in 308 MB with the same 31.9% WER, so the model is deployable without a GPU.
+- **Beam search is not worth it here.** Beam 5 lowers WER by about half a point (31.3% GPU, 31.4% CPU), inside the confidence interval, for 20–35% less throughput.
+- **CTranslate2 4.8.3 truncates long Telugu outputs by default.** It generates only `max_length / 2` tokens (224 of 448), and Telugu costs several byte-level tokens per word, so 103 of 471 FLEURS transcripts came out at least 20% shorter than Transformers', many cut mid-word, and WER read 42.0% before the fix. `bench.py` asks for twice the length and keeps decoding inside Whisper's 448 positions; after that, float16 output matches Transformers on the clips checked.
+
+Peak memory is the increase over the idle baseline: GPU memory from `nvidia-smi` (which includes the CUDA context), or process RSS on CPU. Clocks were not locked, and the laptop was in normal use, so latencies are indicative rather than lab-grade. The Transformers row reads 32.5% here against 32.4% in `evaluate.py`, probably because it decodes one clip at a time instead of in padded batches of 16.
 
 ## Pipeline
 
