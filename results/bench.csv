@@ -1,0 +1,2 @@
+config,device,beam,p50_ms,p95_ms,rtfx,peak_mem_mb,size_mb,threads,wer,wer_lo,wer_hi,cer,n
+hf-fp16-gpu,RTX 4060 Laptop,1,1911.1785,3405.6657,5.3708,710.0,461.1256,,0.3252,0.3073,0.3448,0.0976,471
