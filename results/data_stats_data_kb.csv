@@ -1,0 +1,9 @@
+split,source,clips,hours,speakers
+train,fleurs,2575,8.66,1
+train,kathbath,16914,32.7,41
+train,slr66,4403,5.65,47
+val,fleurs,33,0.11,1
+val,kathbath,222,0.43,36
+val,slr66,45,0.05,28
+test_fleurs,fleurs,471,1.44,1
+test_kathbath,kathbath,2379,5.01,20
