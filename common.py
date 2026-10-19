@@ -11,7 +11,7 @@ REPO = Path(__file__).resolve().parent
 # Heavy artefacts (audio, checkpoints, exports) live under WT_WORK, which should be
 # on the Linux filesystem in WSL2; results/ always lives in the repo.
 WORK = Path(os.environ.get("WT_WORK", REPO)).expanduser()
-DATA = WORK / "data"
+DATA = Path(os.environ.get("WT_DATA", WORK / "data")).expanduser()  # one dir per data mix
 CKPT = WORK / "ckpt"
 EXPORT = WORK / "export"
 RESULTS = REPO / "results"
