@@ -10,7 +10,7 @@ from pathlib import Path
 import jiwer
 import pandas as pd
 
-from common import RESULTS, norm_te
+from common import DATA, RESULTS, norm_te
 
 LATIN, DIGIT = re.compile(r"[A-Za-z]"), re.compile(r"[0-9౦-౯]")
 
@@ -58,6 +58,10 @@ def main():
     args = ap.parse_args()
     out = RESULTS / "breakdown"
     out.mkdir(parents=True, exist_ok=True)
+    seen = None  # Kathbath's valid split shares speakers with its train shards
+    if (DATA / "train").exists():
+        from datasets import load_from_disk
+        seen = set(load_from_disk(str(DATA / "train")).select_columns(["speaker"])["speaker"])
     for path in map(Path, args.preds):
         df = pd.read_csv(path).fillna("")
         df["ref"], df["pred"] = df.ref.map(norm_te), df.pred.map(norm_te)
@@ -70,6 +74,11 @@ def main():
         spk = group_wer(df, "speaker")
         spk.to_csv(out / f"{stem}_by_speaker.csv")
         group_wer(df, "length").sort_index().to_csv(out / f"{stem}_by_length.csv")
+        if seen is not None and not df.speaker.str.endswith(":unknown").all():
+            df["train_speaker"] = df.speaker.isin(seen).map({True: "seen", False: "unseen"})
+            g = group_wer(df, "train_speaker")
+            g["speakers"] = df.groupby("train_speaker").speaker.nunique()
+            g.to_csv(out / f"{stem}_by_seen_speaker.csv")
 
         top = pd.DataFrame([(a, b, n, round(jiwer.cer(a, b), 3)) for (a, b), n in subs.most_common(20)],
                            columns=["ref", "hyp", "count", "char_error_rate"])
