@@ -1,0 +1,4 @@
+kind,correct,wrong,error_rate
+telugu,5434,2084,0.2772
+number,72,127,0.6382
+latin,11,123,0.9179

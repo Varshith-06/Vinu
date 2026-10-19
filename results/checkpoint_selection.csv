@@ -1,0 +1,5 @@
+model,wer,wer_lo,wer_hi,cer,selected
+lora-1k,0.4904,0.4664,0.5149,0.1249,False
+lora-2k,0.4045,0.3828,0.4252,0.0943,False
+lora-3k,0.3265,0.3052,0.3479,0.0703,False
+lora-4k,0.2813,0.262,0.3,0.0585,True

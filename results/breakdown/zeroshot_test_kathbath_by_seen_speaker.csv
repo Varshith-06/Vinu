@@ -1,0 +1,3 @@
+train_speaker,S,D,I,words,clips,wer,S_rate,D_rate,I_rate,speakers
+seen,4752,9144,7381,13896,1270,1.5312,0.342,0.658,0.5312,10
+unseen,5211,6671,3752,11882,1109,1.3158,0.4386,0.5614,0.3158,10
