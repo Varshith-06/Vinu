@@ -1,0 +1,3 @@
+model,split,normaliser,wer,wer_lo,wer_hi,cer,n
+zeroshot,test_fleurs,norm_te,1.5416,1.3985,1.7056,1.6456,471
+zeroshot,test_fleurs,whisper_basic,1.9766,1.8918,2.0701,1.4529,471
