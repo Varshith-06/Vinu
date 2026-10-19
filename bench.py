@@ -61,10 +61,15 @@ def dir_mb(path: Path):
 def make_ct2(path, device, compute_type, beam, threads):
     from faster_whisper import WhisperModel
     m = WhisperModel(str(path), device=device, compute_type=compute_type, cpu_threads=threads)
+    # CTranslate2 4.8.3 generates only max_length / 2 tokens (448 -> 224), which cuts long Telugu
+    # transcripts mid-word. Ask for twice the length so it decodes the same MAX_NEW tokens as
+    # Transformers, and lift faster-whisper's 448 check to match; 4 + MAX_NEW stays within 448 positions.
+    m.max_length = 2 * 448
 
     def run(audio):  # transcribe() is lazy: consume the segments inside the timed region
         segs, _ = m.transcribe(audio, language="te", task="transcribe", beam_size=beam,
-                               temperature=0.0, without_timestamps=True)
+                               temperature=0.0, without_timestamps=True,
+                               max_new_tokens=2 * MAX_NEW - 4)
         return " ".join(s.text.strip() for s in segs)
     return run
 
