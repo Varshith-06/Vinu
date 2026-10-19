@@ -21,6 +21,7 @@ ap.add_argument("--targets", default="q_proj,k_proj,v_proj,out_proj,fc1,fc2")
 ap.add_argument("--max_train_hours", type=float, default=None)
 ap.add_argument("--overfit", type=int, default=0, help="train and score on the first N clips")
 ap.add_argument("--workers", type=int, default=4)
+ap.add_argument("--resume", action="store_true", help="continue from the latest checkpoint in --out")
 args = ap.parse_args()
 
 proc = WhisperProcessor.from_pretrained(BASE, language="te", task="transcribe")
@@ -98,7 +99,7 @@ targs = Seq2SeqTrainingArguments(
 
 trainer = Seq2SeqTrainer(model=model, args=targs, train_dataset=train, eval_dataset=val,
                          data_collator=Collator(model.config.decoder_start_token_id))
-trainer.train()
+trainer.train(resume_from_checkpoint=args.resume or None)
 model.save_pretrained(f"{args.out}/final")
 
 if args.overfit:  # the pipeline works only if WER on the training clips approaches zero
