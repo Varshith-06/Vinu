@@ -115,12 +115,15 @@ def plot():
     import matplotlib.pyplot as plt
     df = pd.read_csv(RESULTS / "bench.csv").drop_duplicates("config", keep="last")
     fig, ax = plt.subplots(figsize=(7, 4.5))
-    for _, r in df.iterrows():
+    for i, (_, r) in enumerate(df.sort_values("rtfx").iterrows()):
         ax.errorbar(r.rtfx, 100 * r.wer, yerr=[[100 * (r.wer - r.wer_lo)], [100 * (r.wer_hi - r.wer)]],
                     fmt="o", capsize=3, color="tab:red" if "cpu" in r.config else "tab:blue")
-        ax.annotate(r.config, (r.rtfx, 100 * r.wer), textcoords="offset points", xytext=(6, 4),
-                    fontsize=8)
+        ax.annotate(r.config, (r.rtfx, 100 * r.wer), textcoords="offset points",
+                    xytext=(6, 6 if i % 2 else -12), fontsize=8)  # alternate so neighbours don't collide
     ax.set_xscale("log")
+    fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}×")
+    ax.xaxis.set_major_formatter(fmt)
+    ax.xaxis.set_minor_formatter(fmt)
     ax.set_xlabel("RTFx (audio seconds per wall second, log scale)")
     ax.set_ylabel("FLEURS-te WER % (95% CI)")
     ax.set_title("whisper-small + Telugu LoRA: accuracy vs speed (blue GPU, red CPU)")
