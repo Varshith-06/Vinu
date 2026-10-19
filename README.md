@@ -1,4 +1,4 @@
-# whisper-telugu
+# Vinu
 
 LoRA fine-tuning of `openai/whisper-small` for Telugu ASR, scored with a Telugu-safe text normaliser and bootstrap confidence intervals, then exported to CTranslate2 (faster-whisper) at FP16 / INT8 and benchmarked for latency against accuracy on an RTX 4060 Laptop GPU and a laptop CPU.
 
