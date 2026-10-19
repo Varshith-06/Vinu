@@ -8,7 +8,7 @@ Results are filled in below as runs finish; every number comes from a CSV in `re
 
 | Step | Script | Output |
 | --- | --- | --- |
-| 1. Load, clean, resample to 16 kHz, split | `data/prepare.py` | `$WT_WORK/data/{train,val,test_fleurs,test_kathbath}`, `results/data_stats.csv` |
+| 1. Load, clean, resample to 16 kHz, split | `data/prepare.py` | `$WT_WORK/data/{train,val,test_fleurs,test_kathbath}`, `results/data_stats_<dir>.csv` |
 | 2. Zero-shot baseline | `evaluate.py --name zeroshot` | `results/wer.csv`, `results/preds/` |
 | 3. LoRA fine-tuning | `train_lora.py` | `$WT_WORK/ckpt/whisper-small-te-lora/` |
 | 4. WER/CER with 95% CIs and breakdowns | `evaluate.py`, `analyze.py` | `results/wer.csv`, `results/breakdown/` |

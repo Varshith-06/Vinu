@@ -31,10 +31,15 @@ def to_features(b):  # on the fly, so no 1 MB-per-clip feature cache on disk
     return {"input_features": feats, "labels": proc.tokenizer(b["text"]).input_ids}
 
 
-train = load_from_disk(str(DATA / "train"))
-n_tok = [len(x) for x in proc.tokenizer(train["text"]).input_ids]  # no map(): it rewrites the audio
-train = train.select([i for i, n in enumerate(n_tok) if n <= 448])
-print(f"dropped {len(n_tok) - len(train)} clips with labels over 448 tokens")
+def fits(ds):
+    """Drop clips whose labels exceed Whisper's 448-token decoder window."""
+    n_tok = [len(x) for x in proc.tokenizer(ds["text"]).input_ids]  # no map(): it rewrites the audio
+    keep = [i for i, n in enumerate(n_tok) if n <= 448]
+    print(f"dropped {len(ds) - len(keep)} clips with labels over 448 tokens")
+    return ds.select(keep)
+
+
+train = fits(load_from_disk(str(DATA / "train")))
 if args.max_train_hours:
     secs, keep = 0.0, []
     for i, d in enumerate(train["duration"]):
@@ -47,7 +52,7 @@ if args.overfit:
     train = train.select(range(args.overfit))
     val = train
 else:
-    val = load_from_disk(str(DATA / "val"))
+    val = fits(load_from_disk(str(DATA / "val")))
 print(f"train: {len(train)} clips, {sum(train['duration']) / 3600:.1f} h")
 raw_val = val
 train, val = train.with_transform(to_features), val.with_transform(to_features)

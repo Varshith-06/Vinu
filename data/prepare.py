@@ -106,7 +106,7 @@ def main():
     out = {"train": train, "val": val}
     out.update({k: add_duration(v).filter(keep) for k, v in tests.items()})
     RESULTS.mkdir(exist_ok=True)
-    with open(RESULTS / "data_stats.csv", "w", newline="", encoding="utf-8") as f:
+    with open(RESULTS / f"data_stats_{DATA.name}.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["split", "source", "clips", "hours", "speakers"])
         for name, ds in out.items():
