@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 import soundfile as sf
-from datasets import Audio, Dataset, concatenate_datasets, load_dataset
+from datasets import Audio, Dataset, concatenate_datasets, disable_caching, load_dataset
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import DATA, RESULTS, SR, WORK, clean_text  # noqa: E402
@@ -76,6 +76,7 @@ def keep(b):
 
 
 def main():
+    disable_caching()  # stale map() caches survived clean_text changes
     ap = argparse.ArgumentParser()
     ap.add_argument("--kathbath_shards", type=int, default=8,
                     help="Kathbath Telugu train shards to use (33 exist, ~4 h each)")

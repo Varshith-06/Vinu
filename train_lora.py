@@ -8,7 +8,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import (Seq2SeqTrainer, Seq2SeqTrainingArguments,
                           WhisperForConditionalGeneration, WhisperProcessor)
 
-from common import BASE, CKPT, DATA, SR, score
+from common import BASE, CKPT, DATA, MAX_NEW, SR, score
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--out", default=str(CKPT / "whisper-small-te-lora"))
@@ -31,15 +31,10 @@ def to_features(b):  # on the fly, so no 1 MB-per-clip feature cache on disk
     return {"input_features": feats, "labels": proc.tokenizer(b["text"]).input_ids}
 
 
-def label_len(texts):
-    return {"n_tok": [len(x) for x in proc.tokenizer(texts).input_ids]}
-
-
 train = load_from_disk(str(DATA / "train"))
-train = train.map(label_len, input_columns="text", batched=True)
-n0 = len(train)
-train = train.filter(lambda n: n <= 448, input_columns="n_tok")
-print(f"dropped {n0 - len(train)} clips with labels over 448 tokens")
+n_tok = [len(x) for x in proc.tokenizer(train["text"]).input_ids]  # no map(): it rewrites the audio
+train = train.select([i for i, n in enumerate(n_tok) if n <= 448])
+print(f"dropped {len(n_tok) - len(train)} clips with labels over 448 tokens")
 if args.max_train_hours:
     secs, keep = 0.0, []
     for i, d in enumerate(train["duration"]):
@@ -110,7 +105,7 @@ if args.overfit:  # the pipeline works only if WER on the training clips approac
                                        return_tensors="pt").input_features
         with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16):
             ids = model.generate(input_features=feats.cuda(), language="te", task="transcribe",
-                                 max_new_tokens=225)
+                                 max_new_tokens=MAX_NEW)
         preds += proc.batch_decode(ids, skip_special_tokens=True)
     print("overfit check:", score(raw_val["text"], preds))
     for r, p in list(zip(raw_val["text"], preds))[:3]:

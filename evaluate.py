@@ -11,7 +11,7 @@ import torch
 from datasets import load_from_disk
 from transformers import WhisperForConditionalGeneration, WhisperProcessor
 
-from common import BASE, DATA, RESULTS, SR, norm_te, norm_whisper, score
+from common import BASE, DATA, MAX_NEW, RESULTS, SR, norm_te, norm_whisper, score
 
 
 def load_model(adapter=None, base=BASE):
@@ -30,14 +30,14 @@ def transcribe(model, proc, ds, batch=16, num_beams=1):
                                        return_tensors="pt").input_features
         with torch.no_grad():
             ids = model.generate(input_features=feats.cuda().half(), language="te",
-                                 task="transcribe", max_new_tokens=225, num_beams=num_beams)
+                                 task="transcribe", max_new_tokens=MAX_NEW, num_beams=num_beams)
         preds += [p.strip() for p in proc.batch_decode(ids, skip_special_tokens=True)]
         print(f"\r{len(preds)}/{len(ds)}", end="", flush=True)
     print(f"  {time.perf_counter() - t0:.0f}s")
     return preds
 
 
-def record(name, split, df, extra=None):
+def record(name, split, df):
     """Score a predictions frame both ways and append the rows to results/wer.csv."""
     path = RESULTS / "wer.csv"
     new = not path.exists()

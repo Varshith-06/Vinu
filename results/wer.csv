@@ -1,3 +1,0 @@
-model,split,normaliser,wer,wer_lo,wer_hi,cer,n
-zeroshot,test_fleurs,norm_te,1.2332,1.1758,1.3002,1.0815,471
-zeroshot,test_fleurs,whisper_basic,1.2006,1.1729,1.2311,0.8221,471

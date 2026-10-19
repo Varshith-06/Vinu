@@ -15,7 +15,7 @@ import pandas as pd
 import psutil
 from datasets import load_from_disk
 
-from common import DATA, EXPORT, RESULTS, SR, score
+from common import DATA, EXPORT, MAX_NEW, RESULTS, SR, score
 
 CONFIGS = {  # name: (backend, model dir, device, compute type, beam)
     "hf-fp16-gpu": ("hf", EXPORT / "merged", "cuda", "float16", 1),
@@ -79,7 +79,7 @@ def make_hf(path, beam):
         f = proc.feature_extractor(audio, sampling_rate=SR, return_tensors="pt").input_features
         with torch.no_grad():
             ids = m.generate(input_features=f.cuda().half(), language="te", task="transcribe",
-                             max_new_tokens=225, num_beams=beam)
+                             max_new_tokens=MAX_NEW, num_beams=beam)
         torch.cuda.synchronize()
         return proc.batch_decode(ids, skip_special_tokens=True)[0].strip()
     return run

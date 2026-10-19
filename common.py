@@ -18,6 +18,9 @@ RESULTS = REPO / "results"
 
 BASE = "openai/whisper-small"
 SR = 16_000
+# Telugu costs several byte-level tokens per word: allow the full 448-token window
+# minus the 4 prompt tokens, or long transcripts are cut off
+MAX_NEW = 444
 
 ZW = re.compile("[\u200c\u200d]")  # zero-width non-joiner / joiner
 
